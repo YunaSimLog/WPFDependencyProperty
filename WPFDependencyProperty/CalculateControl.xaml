@@ -16,6 +16,7 @@
         </Style>
         <Style TargetType="{x:Type Grid}">
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="10"/>
         </Style>
 
     </UserControl.Resources>
