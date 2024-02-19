@@ -23,6 +23,7 @@ namespace WPFDependencyProperty
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = new MainViewModel();
         }
     }
 }

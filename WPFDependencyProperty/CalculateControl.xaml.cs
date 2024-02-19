@@ -28,18 +28,91 @@ namespace WPFDependencyProperty
         }
 
         public static readonly DependencyProperty Value1Property =
-            DependencyProperty.Register("Value1", typeof(decimal), typeof(CalculateControl), new PropertyMetadata(0m, OnValueChanged));
+            DependencyProperty.Register("Value1", typeof(decimal), typeof(CalculateControl),
+                new PropertyMetadata(0m, OnValueChanged, CoerceLimitValue));
 
         public static readonly DependencyProperty Value2Property =
-            DependencyProperty.Register("Value2", typeof(decimal), typeof(CalculateControl), new PropertyMetadata(0m, OnValueChanged));
+            DependencyProperty.Register("Value2", typeof(decimal), typeof(CalculateControl),
+                new PropertyMetadata(0m, OnValueChanged, CoerceLimitValue));
 
         public static readonly DependencyProperty OperatorProperty =
-            DependencyProperty.Register("Operator", typeof(string), typeof(CalculateControl), new PropertyMetadata("+", OnValueChanged));
+            DependencyProperty.Register("Operator", typeof(string), typeof(CalculateControl),
+                new PropertyMetadata("+", OnValueChanged), new ValidateValueCallback(IsValidOperator));
+
+        public static readonly DependencyProperty DesignModeProperty =
+            DependencyProperty.Register("DesignMode", typeof(DesignMode), typeof(CalculateControl),
+                new PropertyMetadata(DesignMode.White, OnDesignModeChanged));
+        
+        public Brush TextBoxForeground { get; set; } = Brushes.Black;
+        public Brush TextBoxBackground { get; set; } = Brushes.White;
+        public Brush UserControlBackground { get; set; } = Brushes.White;
+
+        private void ChangeDesignMode(DesignMode designMode)
+        {
+            if(designMode==DesignMode.White)
+            {
+                TextBoxForeground = Brushes.Black;
+                TextBoxBackground = Brushes.White;
+                UserControlBackground = Brushes.White;
+            }
+            else
+            {
+                TextBoxForeground = Brushes.White;
+                TextBoxBackground = Brushes.DarkGray;
+                UserControlBackground = Brushes.Black;
+            }
+            OnPropertyChanged(nameof(TextBoxForeground));
+            OnPropertyChanged(nameof(TextBoxBackground));
+            OnPropertyChanged(nameof(UserControlBackground));
+        }
+
+        private static void OnDesignModeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            CalculateControl calculateControl = (CalculateControl)d;
+            if (e.NewValue != e.OldValue)
+            {
+                if (e.NewValue is DesignMode designMode)
+                {
+                    calculateControl.ChangeDesignMode(designMode);
+
+                }
+            }
+
+            calculateControl.OnPropertyChanged(nameof(Result));
+        }
 
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             CalculateControl calculateControl = (CalculateControl)d;
             calculateControl.OnPropertyChanged(nameof(Result));
+        }
+
+        private static object CoerceLimitValue(DependencyObject d, object baseValue)
+        {
+            decimal value = (decimal)baseValue;
+            if (value < -9999)
+            {
+                return -9999m;
+            }
+            else if (value > 9999)
+            {
+                return 9999m;
+            }
+            else
+            {
+                return value;
+            }
+        }
+
+        private static bool IsValidOperator(object value)
+        {
+            string oper = (string)value;
+
+            return oper switch
+            {
+                "+" or "-" or "*" or "/" => true,
+                _ => false,
+            };
         }
 
         public string Operator
@@ -54,11 +127,16 @@ namespace WPFDependencyProperty
             set { SetValue(Value1Property, value); }
         }
 
-
         public decimal Value2
         {
             get { return (decimal)GetValue(Value2Property); }
             set { SetValue(Value2Property, value); }
+        }
+
+        public DesignMode DesignMode
+        {
+            get { return (DesignMode)GetValue(DesignModeProperty); }
+            set { SetValue(DesignModeProperty, value); }
         }
 
         public decimal Result => Operator switch
